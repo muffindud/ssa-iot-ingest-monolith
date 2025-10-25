@@ -1,14 +1,64 @@
-from flask import Blueprint
+from flask import Blueprint, request
+from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
+import bcrypt
+
+from repository.user_data import get_user_from_db, create_user_in_db
 
 
 user_auth_bp = Blueprint('user_auth', __name__)
 
+
 @user_auth_bp.route('/login', methods=['GET'])
 def user_login():
-    # TODO: Implement user login logic here
-    return "User Login Endpoint"
+    body = request.get_json()
+    username = body.get('username', None)
+    password = body.get('password', None)
+
+    user = get_user_from_db(username)
+
+    if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
+        access_token = create_access_token(identity={"user_id": user['id'], "role": "user"})
+        refresh_token = create_refresh_token(identity={"user_id": user['id'], "role": "user"})
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }, 200
+
+    return {
+        "message": "Invalid credentials"
+    }, 401
+
 
 @user_auth_bp.route('/register', methods=['POST'])
 def user_register():
-    # TODO: Implement user registration logic here
-    return "User Registration Endpoint"
+    body = request.get_json()
+    username = body.get('username', None)
+    password = body.get('password', None)
+
+    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    user_id = create_user_in_db(username, password_hash)
+
+    if user_id:
+        access_token = create_access_token(identity={"user_id": user_id, "role": "user"})
+        refresh_token = create_refresh_token(identity={"user_id": user_id, "role": "user"})
+        return {
+            "message": "User registered successfully",
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }, 201
+
+    return {
+        "message": "User registration failed"
+    }, 500
+
+
+@user_auth_bp.route('/refresh', methods=['GET'])
+@jwt_required(refresh=True)
+def user_refresh():
+    current_user = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user)
+    return {
+        "access_token": new_access_token
+    }, 200

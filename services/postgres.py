@@ -1,0 +1,31 @@
+from os import getenv
+from threading import Lock
+
+from psycopg2 import connect
+
+
+URI = getenv('POSTGRES_URI')
+
+
+class Database:
+    _instance = None
+    _lock = Lock()
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            with cls._lock:
+                if not cls._instance:
+                    cls._instance = super().__new__(cls)
+
+        return cls._instance
+
+    def __init__(self):
+        if not hasattr(self, 'initialized'):
+            self.connection = self.connect(URI)
+            self.initialized = True
+
+    def execute_query(self, query, params=None) -> list[tuple]:
+        with self.connection.cursor() as cursor:
+            cursor.execute(query, params)
+            self.connection.commit()
+            return cursor.fetchall()
