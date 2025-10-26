@@ -5,13 +5,15 @@ db = Database()
 
 
 def get_user_from_db(username: str) -> dict | None:
-    result = db.execute_query(
+    results = db.execute_query(
         "SELECT id, username, password_hash FROM users WHERE username = %s",
         (username,)
-    )[0]
+    )
+
+    result = results[0] if results else None
 
     if result:
-        user_id, username, password_hash, roles = result
+        user_id, username, password_hash = result
         return {
             'id': user_id,
             'username': username,
@@ -29,6 +31,18 @@ def create_user_in_db(username: str, password_hash: bytes) -> int:
 
     user_id = result[0][0]
     return user_id
+
+
+def get_user_id(username: str) -> int | None:
+    result = db.execute_query(
+        "SELECT id FROM users WHERE username = %s",
+        (username,)
+    )
+
+    if result:
+        return result[0][0]
+
+    return None
 
 
 def get_user_device_ids(user_id: int) -> list[int]:

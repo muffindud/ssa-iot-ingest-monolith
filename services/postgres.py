@@ -21,7 +21,7 @@ class Database:
 
     def __init__(self):
         if not hasattr(self, 'initialized'):
-            self.connection = self.connect(URI)
+            self.connection = connect(URI)
             self.initialized = True
 
     def execute_query(self, query, params=None) -> list[tuple]:
