@@ -71,6 +71,11 @@ def user_register():
 @jwt_required(refresh=True)
 def user_refresh():
     current_user = get_jwt_identity()
+    if current_user['role'] != 'user':
+        return {
+            "message": "Invalid token role"
+        }, 401
+
     new_access_token = create_access_token(identity=current_user)
 
     return {
