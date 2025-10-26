@@ -55,6 +55,18 @@ def get_user_device_ids(user_id: int) -> list[int]:
     return device_ids
 
 
+def link_device_to_user(user_id: int, device_id: int) -> None:
+    results = db.execute_query(
+        "INSERT INTO user_devices (user_id, device_id) VALUES (%s, %s) RETURNING id",
+        (user_id, device_id)
+    )
+
+    if results:
+        link_id = results[0][0]
+        return link_id
+
+    return None
+
 def truncate_user_data() -> None:
     db.execute_query("TRUNCATE TABLE user_devices")
     db.execute_query("TRUNCATE TABLE users")

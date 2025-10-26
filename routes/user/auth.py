@@ -2,7 +2,8 @@ from flask import Blueprint, Flask, request
 from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
 import bcrypt
 
-from repository.user_data import get_user_from_db, create_user_in_db, get_user_id
+from repository.user_data import get_user_from_db, create_user_in_db, get_user_id, link_device_to_user
+from repository.iot_data import get_device_from_db, get_device_owner_id
 
 
 user_auth_bp = Blueprint('user_auth', __name__)
@@ -81,3 +82,42 @@ def user_refresh():
     return {
         "access_token": new_access_token
     }, 200
+
+
+@user_auth_bp.route('/link', methods=['POST'])
+@jwt_required()
+def user_link_device():
+    identity = get_jwt_identity()
+    if identity['role'] != 'user':
+        return {
+            "message": "Unauthorized"
+        }, 403
+
+    user_id = identity['user_id']
+    body = request.get_json()
+    device_mac: str = body.get('mac', None)
+
+    device = get_device_from_db(device_mac)
+    if not device:
+        return {
+            "message": "Device not found"
+        }, 404
+
+    device_id = device['id']
+
+    owner_id = get_device_owner_id(device_id)
+    if owner_id is not None:
+        return {
+            "message": "Device already linked to a user"
+        }, 409
+
+    link_id = link_device_to_user(user_id, device_id)
+
+    if link_id:
+        return {
+            "message": "Device linked successfully"
+        }, 200
+
+    return {
+        "message": "Failed to link device"
+    }, 500

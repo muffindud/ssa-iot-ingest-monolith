@@ -1,8 +1,9 @@
 from services.postgres import Database
+from services.mongo import DB
 
 
 db = Database()
-
+mongo_db = DB
 
 def get_device_from_db(device_mac: str) -> dict | None:
     results = db.execute_query(
@@ -25,8 +26,7 @@ def get_device_from_db(device_mac: str) -> dict | None:
 def create_device_in_db(device_mac: str, device_type: str) -> int:
     result = db.execute_query(
         "INSERT INTO devices (name, type) VALUES (%s, %s) RETURNING id",
-        (device_mac, device_type),
-        fetch_one=True
+        (device_mac, device_type)
     )
 
     device_id = result[0][0]
@@ -38,6 +38,27 @@ def get_device_id(device_mac: str) -> int | None:
     result = db.execute_query(
         "SELECT id FROM devices WHERE name = %s",
         (device_mac,)
+    )
+
+    if result:
+        return result[0][0]
+
+    return None
+
+
+def publish_data(device_id: int, data: dict) -> None:
+    collection = mongo_db['iot_data']
+    document = {
+        'device_id': device_id,
+        'data': data
+    }
+    collection.insert_one(document)
+
+
+def get_device_owner_id(device_id: int) -> int | None:
+    result = db.execute_query(
+        "SELECT user_id FROM user_devices WHERE device_id = %s",
+        (device_id,)
     )
 
     if result:
