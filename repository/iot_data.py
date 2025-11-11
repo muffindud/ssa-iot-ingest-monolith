@@ -1,3 +1,5 @@
+from json import loads
+
 from services.postgres import Database
 from services.mongo import DB
 
@@ -58,8 +60,8 @@ def publish_data(device_id: int, data: dict) -> None:
 def get_data(device_id: int, page: int = 1, size: int = 10) -> list[dict]:
     collection = mongo_db['iot_data']
     skip = (page - 1) * size
-    cursor = collection.find({'device_id': device_id}).skip(skip).limit(size)
-    data = [doc for doc in cursor]
+    with collection.find({'device_id': device_id}, {"data": 1, "_id": 0}).skip(skip).limit(size) as cursor:
+        data = [doc["data"] for doc in cursor]
     return data
 
 

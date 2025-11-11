@@ -1,8 +1,9 @@
-from pkgutil import get_data
-from flask import Blueprint, request
+from json import dumps
+
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from repository.iot_data import truncate_mongo_data
+from repository.iot_data import truncate_mongo_data, get_data
 from repository.user_data import get_user_device_ids, is_device_linked_to_user, truncate_user_data
 
 
@@ -29,7 +30,7 @@ def user_retrieve():
 
     device_data = get_data(device_id, page, size)
 
-    return {"device_data": device_data}, 200
+    return {"data": device_data}, 200
 
 
 @user_access_bp.route('/truncate', methods=['DELETE'])
