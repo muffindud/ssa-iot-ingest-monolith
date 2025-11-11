@@ -55,6 +55,15 @@ def get_user_device_ids(user_id: int) -> list[int]:
     return device_ids
 
 
+def is_device_linked_to_user(user_id: int, device_id: int) -> bool:
+    results = db.execute_query(
+        "SELECT id FROM user_devices WHERE user_id = %s AND device_id = %s",
+        (user_id, device_id)
+    )
+
+    return len(results) > 0
+
+
 def link_device_to_user(user_id: int, device_id: int) -> None:
     results = db.execute_query(
         "INSERT INTO user_devices (user_id, device_id) VALUES (%s, %s) RETURNING id",

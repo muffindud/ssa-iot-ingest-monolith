@@ -55,6 +55,19 @@ def publish_data(device_id: int, data: dict) -> None:
     collection.insert_one(document)
 
 
+def get_data(device_id: int, page: int = 1, size: int = 10) -> list[dict]:
+    collection = mongo_db['iot_data']
+    skip = (page - 1) * size
+    cursor = collection.find({'device_id': device_id}).skip(skip).limit(size)
+    data = [doc for doc in cursor]
+    return data
+
+
+def truncate_mongo_data() -> None:
+    collection = mongo_db['iot_data']
+    collection.delete_many({})
+
+
 def get_device_owner_id(device_id: int) -> int | None:
     result = db.execute_query(
         "SELECT user_id FROM user_devices WHERE device_id = %s",
