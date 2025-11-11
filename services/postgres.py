@@ -26,6 +26,10 @@ class Database:
 
     def execute_query(self, query, params=None) -> list[tuple]:
         with self.connection.cursor() as cursor:
-            cursor.execute(query, params)
-            self.connection.commit()
-            return cursor.fetchall()
+            try:
+                cursor.execute(query, params)
+                self.connection.commit()
+                return cursor.fetchall()
+            except Exception as e:
+                self.connection.rollback()
+                raise e

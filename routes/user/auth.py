@@ -17,6 +17,11 @@ def user_login():
 
     user = get_user_from_db(username)
 
+    if not user:
+        return {
+            "message": "Invalid credentials"
+        }, 401
+
     if isinstance(user['password_hash'], memoryview):
         stored_bytes = user['password_hash'].tobytes()
     elif isinstance(user['password_hash'], bytes):
