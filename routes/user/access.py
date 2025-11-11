@@ -1,10 +1,10 @@
 from json import dumps
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from repository.iot_data import truncate_mongo_data, get_data
-from repository.user_data import get_user_device_ids, is_device_linked_to_user, truncate_user_data
+from repository.iot_data import truncate_mongo_data, get_data, get_device_owner_id
+from repository.user_data import get_user_device_ids, truncate_user_data
 
 
 user_access_bp = Blueprint('user_access', __name__)
@@ -20,7 +20,7 @@ def user_retrieve():
             "message": "Device ID is required"
         }, 400
 
-    if not is_device_linked_to_user(user_id, device_id):
+    if user_id != get_device_owner_id(device_id):
         return {
             "message": "Unauthorized access to device data"
         }, 403
@@ -31,6 +31,15 @@ def user_retrieve():
     device_data = get_data(device_id, page, size)
 
     return {"data": device_data}, 200
+
+
+@user_access_bp.route('/devices', methods=['GET'])
+@jwt_required()
+def user_devices():
+    user_id = get_jwt_identity().get('user_id')
+    device_ids = get_user_device_ids(user_id)
+
+    return {"device_ids": device_ids}, 200
 
 
 @user_access_bp.route('/truncate', methods=['DELETE'])
