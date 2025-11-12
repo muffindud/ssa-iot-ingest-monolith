@@ -39,6 +39,8 @@ def user_devices():
     user_id = get_jwt_identity().get('user_id')
     device_ids = get_user_device_ids(user_id)
 
+    device_ids = device_ids if device_ids else []
+
     return {"device_ids": device_ids}, 200
 
 

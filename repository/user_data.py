@@ -47,7 +47,7 @@ def get_user_id(username: str) -> int | None:
 
 def get_user_device_ids(user_id: int) -> list[int]:
     results = db.execute_query(
-        "SELECT device_id FROM devices WHERE user_id = %s",
+        "SELECT device_id FROM user_devices WHERE user_id = %s",
         (user_id,)
     )
 
